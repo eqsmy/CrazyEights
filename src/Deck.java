@@ -1,7 +1,3 @@
-// Zian Chen, Period 3
-// November 30, 2017
-// Deck - class that holds an array of Card values and can shuffle, deal, and split the deck
-
 public class Deck {
 	private int top;
 	private int size;
@@ -18,6 +14,12 @@ public class Deck {
 
 		/* Add values to each card. */
 		addValues();
+	}
+	
+	// precondition: none.
+	// postcondition: returns value of TOP.
+	public int getTop() {
+		return top;
 	}
 
 	// precondition: none.

@@ -1,24 +1,3 @@
-Skip to content
-Help save net neutrality! A free, open internet is once again at stake—and we need your help.
-Learn more  Dismiss
-This repository
-Search
-Pull requests
-Issues
-Marketplace
-Explore
- @zianchen774
- Sign out
- Watch 0
-  Star 0  Fork 1 zianchen774/CrazyEights-1
-forked from cweckle/CrazyEights
- Code  Pull requests 0  Projects 0  Wiki  Insights  Settings
-Tree: a2844bd3a6 Find file Copy pathCrazyEights-1/updatedEightsGame
-a2844bd  21 hours ago
-@zianchen774 zianchen774 Create updatedEightsGame
-1 contributor
-RawBlameHistory    
-326 lines (294 sloc)  10.5 KB
 // Zian Chen & Elysia Smyers, Period 3
 // 12 December 2017
 // EightsGame - class that plays Crazy Eights by allowing PLAYER to choose cards and has COMPUTER determine which is the "smartest" move.

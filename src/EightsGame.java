@@ -1,13 +1,38 @@
+Skip to content
+Help save net neutrality! A free, open internet is once again at stake—and we need your help.
+Learn more  Dismiss
+This repository
+Search
+Pull requests
+Issues
+Marketplace
+Explore
+ @zianchen774
+ Sign out
+ Watch 0
+  Star 0  Fork 1 zianchen774/CrazyEights-1
+forked from cweckle/CrazyEights
+ Code  Pull requests 0  Projects 0  Wiki  Insights  Settings
+Tree: a2844bd3a6 Find file Copy pathCrazyEights-1/updatedEightsGame
+a2844bd  21 hours ago
+@zianchen774 zianchen774 Create updatedEightsGame
+1 contributor
+RawBlameHistory    
+326 lines (294 sloc)  10.5 KB
+// Zian Chen & Elysia Smyers, Period 3
+// 12 December 2017
+// EightsGame - class that plays Crazy Eights by allowing PLAYER to choose cards and has COMPUTER determine which is the "smartest" move.
 import java.util.Scanner;
 
 public class EightsGame {
 	// precondition: none.
 	// postcondition: moves each player until either the stock pile is gone or one player has no more cards. */
-	public void playGame(Deck deck, Player player1, Player computer) {
+	public void playGame(Deck deck, Player player, Player computer) {
 		boolean over = false;
 		boolean yourTurn = true;
 		boolean didComputerWin = false;
-		Card cardPlayed = new Card(0, "");
+		boolean ranOutOfCards = false;
+		Card cardPlayed = new Card(1, "");
 
 		/* The first card displayed will be the top card dealt off the stock pile. */
 		Card topCard = deck.deal();
@@ -15,101 +40,166 @@ public class EightsGame {
 
 		/* Continue rotating players until the game is designated to be over. */
 		while(!over) {
-			if(yourTurn) {
-				cardPlayed = makeMove(player1, deck, topCard);
-				topCard = cardPlayed;
-				yourTurn = false;
-				System.out.println();
-				over = checkDone(player1);
+
+			/* Note that if a value of a card is 0, this means that cards ran out. */
+			if(cardPlayed.getValue() != 0) {
+				if(yourTurn) {
+					cardPlayed = makeMove(player, computer, deck, topCard);
+					topCard = cardPlayed;
+					yourTurn = false;
+					over = checkDone(player);
+				}
+				else {
+					cardPlayed = computerPlay(computer, player, topCard, deck);
+					topCard = cardPlayed;
+					yourTurn = true;
+					over = checkDone(computer);
+					if(over == true)
+						didComputerWin = true;
+				}
+				if(!over) {
+					/* Display the top card for the next player. */
+					System.out.println("-----------------------------------");
+					System.out.println("THE TOP CARD IS: " + cardPlayed);
+				}
 			}
+
+			/* In the case that all the cards in the deck run out, the player with less cards wins. */
 			else {
-				cardPlayed = computerPlay(computer, topCard, deck);
-				topCard = cardPlayed;
-				yourTurn = true;
-				System.out.println();
-				over = checkDone(computer);
-				if(over == true)
+				if(computer.getHighNum() < player.getHighNum()) {
 					didComputerWin = true;
+					ranOutOfCards = true;
+				}
+				over = true;
 			}
-			/* Display the top card for the next player. */
-			System.out.println("THE TOP CARD IS: " + cardPlayed);
 		}
-		
-		/* Prints out messages. */
-		if(didComputerWin)
+		printMessages(didComputerWin, ranOutOfCards, player, computer);
+	}
+
+	// precondition: none.
+	// postcondition: prints message depending on win or loss.
+	public void printMessages(boolean didComputerWin, boolean ranOutOfCards, Player player, Player computer) {
+		if(!ranOutOfCards) {
+			printPartOne(didComputerWin, player, computer);
+		}
+		else {
+			printPartTwo(didComputerWin, player, computer);
+		}
+	}
+	
+	// precondition: none.
+	// postcondition: prints out the message if you don't run out of cards.
+	public void printPartOne(boolean didComputerWin, Player player, Player computer) {
+		for(int i = 0; i < 15; i++)
+			System.out.println();
+		if(didComputerWin) {
+			System.out.println("YOU LOST!");
+			System.out.println("YOUR REMAINING HAND: " + '\n' + player);
+			int points = player.calculatePoints();
+			System.out.println("COMPUTER'S POINTS: " + points);
+		}
+		else {
+			System.out.println("YOU WON!");
+			System.out.println("COMPUTER'S REMAINING HAND: " + '\n' + computer);
+			int points = computer.calculatePoints();
+			System.out.println("YOUR POINTS: " + points);
+		}
+		for(int i = 0; i < 15; i++)
+			System.out.println();
+	}
+	
+	// precondition: none.
+	// postcondition: prints out the message if you do run out of cards.
+	public void printPartTwo(boolean didComputerWin, Player player, Player computer) {
+		System.out.println("NO MORE CARDS LEFT. " + '\n');
+		System.out.println("YOUR REMAINING HAND: " + '\n' + player);
+		System.out.println();
+		System.out.println("COMPUTER'S REMAINING HAND: " + '\n' + computer);
+		System.out.println();
+		int playerPoints = player.calculatePoints();
+		int computerPoints = computer.calculatePoints();
+		System.out.println("YOUR POINTS: " + computerPoints);
+		System.out.println("COMPUTER'S POINTS: " + playerPoints + '\n');
+		if(didComputerWin) 
 			System.out.println("YOU LOST!");
 		else
 			System.out.println("YOU WON!");
 	}
 
+	// precondition: none.
+	// postcondition: returns a boolean depending on if the player's hand is emptied.
 	public boolean checkDone(Player player) {
 		Card[] hand = player.getHand();
-		if(hand[0] == null) {
+		if(hand[0] == null)
 			return true;
-		}
 		return false;
 	}
 
 	// precondition: none.
 	// postcondition: plays a valid card for the player.
-	private Card makeMove(Player player1, Deck deck, Card topCard) {
+	private Card makeMove(Player player, Player computer, Deck deck, Card topCard) {
 		Scanner keys = new Scanner(System.in);
 		boolean done = false;
 		Card cardPlayed = new Card(0, "");
 		while(!done) {
 			/* Display the top card and ask for which card the player wants to put down. */
-			System.out.println("YOUR HAND IS: " + '\n' + player1);
+			System.out.println("YOUR HAND IS: " + '\n' + player);
 			System.out.println("WHICH CARD DO YOU WANT TO PLAY?" + '\n' + "ENTER 0 TO DRAW");
 			int response = keys.nextInt();
 
 			/* If they do not have any cards, draw cards from stock pile. */
 			if(response == 0) {
-				player1.add(deck.deal());
+
+				/* Make sure that the total number of cards does not surpass the deck. */
+				if(deck.getTop() == 52)
+					done = true;
+				else 
+					player.add(deck.deal());
 			}
 
 			/* Otherwise, check the validity of the card chosen. */
 			else {
-				boolean canPlay = checkValidity(player1.getCard(response - 1), topCard);
+				boolean canPlay = checkValidity(player.getCard(response - 1), topCard);
 
 				/* If the card is valid, then play that card by setting cardPlayed to valid card. */
 				if(canPlay) {
-					System.out.println("YOU PLAYED: " + player1.getCard(response - 1));
+					System.out.println("YOU PLAYED: " + player.getCard(response - 1));
 					done = true;
-					cardPlayed = player1.getCard(response - 1);
-					player1.subtract(response - 1);
+					cardPlayed = player.getCard(response - 1);
+
+					/* Take card out of your hand. */
+					player.subtract(response - 1);
 				}
 
 				/* Otherwise, return an error message. */
-				else {
-					System.out.println("YOU CANNOT PLAY THIS CARD. PICK NEW CARD. ");
-				}
+				else
+					System.out.println("YOU CANNOT PLAY THIS CARD. PICK NEW CARD. " + '\n');
 			}
 		}
 		return cardPlayed;
 	}
 
-	// precondition: none.
+	// precondition: the card must not hold a null value (player cannot choose number greater than those displayed.
 	// postcondition: return a true or false depending on whether or not the card matches suit or value.
 	public static boolean checkValidity(Card card, Card topCard) {
-		if(card.getValue() == topCard.getValue() || card.getSuit().equals(topCard.getSuit()) || card.getValue() == 8) {
+		if(card.getValue() == topCard.getValue() || card.getSuit().equals(topCard.getSuit()) || card.getValue() == 8)
 			return true;
-		}
-		else {
+		else
 			return false;
-		}
 	}
 
 	// precondition: none.
 	// postcondition: computer returns the "best" card move. 
-	public Card computerPlay(Player computer, Card topCard, Deck deck) {
+	public Card computerPlay(Player computer, Player player, Card topCard, Deck deck) {
 		/* Note: this method will first determine which cards are playable in the 
 		 * computer's hand. Playable cards can be played due to EITHER suit or number. 
 		 * Among a selection of multiple suits or numbers, choosing a card with multiple
 		 * suits is more advantageous than choosing a card with multiple numbers.
 		 */
-		Card cardPlayed = new Card(0, "Credits to Marina Rogers");
+		Card cardPlayed = new Card(0, "Marina Rogers supplied a few ideas in this portion of the game (and wants recognition and maybe some extra credit)");
 		Card[] hand = computer.getHand();
 		boolean over = false;
+		int dealtCards = 0;
 
 		while(!over) {
 			/* New array that will hold the locations of playable cards in my hand,
@@ -118,53 +208,67 @@ public class EightsGame {
 			 * in the location of playableTracker.
 			 */
 			int[] playableTracker = trackPlayableCards(hand, topCard);
-			if(checkPlayable(playableTracker)) {
-				/* We then need to confirm which suits are the most abundant in the hand.
-				 * To do this, we use a new array which each spot corresponding to a suit.
-				 * 0 - clubs
-				 * 1 - spades
-				 * 2 - hearts 
-				 * 3 - diamonds
-				 */
-				int[] suitTracker = trackSuits(hand);
 
-				/* Save which suit appears the most. */
-				String mostSuit = getMostSuits(suitTracker, hand);
+			/* We then need to confirm which suits are the most abundant in the hand.
+			 * To do this, we use a new array which each spot corresponding to a suit.
+			 * 0 - clubs
+			 * 1 - spades
+			 * 2 - hearts 
+			 * 3 - diamonds
+			 */
+			int[] suitTracker = trackSuits(hand);
+			/* Save which suit appears the most. */
+			String mostSuit = getMostSuits(suitTracker, hand);
+			int cardPlayedLocation = 0;
+
+			if(checkPlayable(playableTracker)) {
+				/* If the suit that appears the most frequently is also the suit of the top card, then go ahead and play the first card that has that suit. */
 				if(mostSuit.equals(topCard.getSuit())) {
-					/* Go through the playable cards and decide which one is best. */
 					for(int i = 0; i < playableTracker.length; i++) {
 						if(hand[i] != null) {
-							if(playableTracker[i] == 1) {
-								if(hand[i].getSuit().equals(mostSuit)) {
-									cardPlayed = hand[i];
-									over = true;
-									computer.subtract(i);
-								}
+							if(playableTracker[i] == 1 && hand[i].getSuit().equals(mostSuit)) {
+								cardPlayed = hand[i];
+								cardPlayedLocation = i;
+								over = true;
 							}
 						}
 					}
 				}
+
+				/* If not, then just play the first playable card that appears. */
 				else {
 					for(int i = 0; i < playableTracker.length; i++) {
-						if(hand[i] != null) {
-							if(playableTracker[i] == 1) {
-								cardPlayed = hand[i];
-								over = true;
-								computer.subtract(i);
-							}
+						if(hand[i] != null && playableTracker[i] == 1) {
+							cardPlayed = hand[i];
+							cardPlayedLocation = i;
+							over = true;
 						}
 					}
 				}
+
+				/* Take this card out from the computer's hand. */
+				computer.subtract(cardPlayedLocation);
 			}
 			else {
-				computer.add(deck.deal());
-				System.out.println("COMPUTER DREW A CARD.");
+				/* Make sure that the total number of cards does not surpass the deck. */
+				if(deck.getTop() == 52)
+					over = true;
+				else {
+					computer.add(deck.deal());
+					dealtCards++;
+				}
 			}
 		}
+		if(dealtCards != 0)
+			System.out.println("COMPUTER DREW " + dealtCards + " CARD(S)");
 		System.out.println("COMPUTER PLAYED: " + cardPlayed);
+		System.out.println("COMPUTER HAS " + computer.getHighNum() + " CARDS LEFT.");
 		return cardPlayed;
 	}
 
+
+	// precondition: none.
+	// postcondition: return a true or false to check if there are any playable cards.
 	public boolean checkPlayable(int[] playableTracker) {
 		for(int i = 0; i < playableTracker.length; i++) {
 			if(playableTracker[i] > 0)
@@ -173,22 +277,20 @@ public class EightsGame {
 		return false;
 	}
 
+	// precondition: none.
+	// postcondition: returns an int[] array storing the locations of playable cards.
 	public int[] trackPlayableCards(Card[] hand, Card topCard) {
 		int[] playableTracker = new int[hand.length];
-		/* Go through each card in the hand, only checking ones that have values. */
 		for(int i = 0; i < hand.length; i++) {
-			if(hand[i] != null) {
-
-				/* If the numbers OR suit match, save the location in playableTracker
-				 * by adding 1 to the spot in playableTracker. */
-				if(checkValidity(hand[i], topCard)) {
-					playableTracker[i]++;
-				}
+			if(hand[i] != null && checkValidity(hand[i], topCard)) {
+				playableTracker[i]++;
 			}
 		}
 		return playableTracker;
 	}
 
+	// precondition: none.
+	// postcondition: return an int[] array tracking the number of each suit.
 	public int[] trackSuits(Card[] hand) {
 		int[] suitTracker = new int[hand.length];
 		for(int i = 0; i < hand.length; i++) {
@@ -210,15 +312,47 @@ public class EightsGame {
 		return suitTracker;
 	}
 
+	// precondition: none.
+	// postcondition: returns the suit that appears most frequently.
 	public String getMostSuits(int[] suitTracker, Card[] hand) {
 		int greatest = 0;
-		String mostSuit = "";
+		int tracker = 5;
+		String mostSuit = " ";
+
+		/* Store the location of the most frequently occurring suit in an array. */
 		for(int i = 0; i < suitTracker.length; i++) {
-			if(suitTracker[i] != 0 && suitTracker[i] > greatest) {
-				mostSuit = hand[i].getSuit();
+			if(suitTracker[i] != 0 && suitTracker[i] >= greatest) {
+				tracker = i;
 				greatest = suitTracker[i];
 			}
 		}
+
+		/* Return the most frequently occurring suit according to the tracking array's corresponding suit. */
+		if(tracker == 0) {
+			mostSuit = "clubs";
+		}
+		else if(tracker == 1) {
+			mostSuit = "spades";
+		}
+		else if(tracker == 2) {
+			mostSuit = "hearts";
+		}
+		else if(tracker == 3) {
+			mostSuit = "diamonds";
+		}
+
 		return mostSuit;
 	}
 }
+© 2017 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Help
+Contact GitHub
+API
+Training
+Shop
+Blog
+About
